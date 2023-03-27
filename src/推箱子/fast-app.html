@@ -1,0 +1,297 @@
+<script src="./app.js"></script>
+<template id="app-main" view-model="App">
+  <div>
+    <div style---cell-width$.="cellWidth" class="app">
+      <div class="cells">
+        <div class="line" for.="line of cells">
+          <div onclick.="touchCell(cell)" class.="cell.type + ' ' + cell.dtype?.replace('Box', 'TargetBox') + ' cell'"
+            for.="cell of line">
+            <div class="declarator"></div>
+            <div class="object"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menus">
+        <div>
+          <div></div>
+          <div class="Up icon-wraper" onclick.="tryMove(0, -1)">
+            <div class="icon"></div>
+          </div>
+          <div></div>
+        </div>
+        <div>
+          <div class="Left icon-wraper" onclick.="tryMove(-1, 0)">
+            <div class="icon"></div>
+          </div>
+          <div></div>
+          <div class="Right icon-wraper" onclick.="tryMove(1, 0)">
+            <div class="icon"></div>
+          </div>
+        </div>
+        <div>
+          <div></div>
+          <div class="Down icon-wraper" onclick.="tryMove(0, 1)">
+            <div class="icon"></div>
+          </div>
+          <div></div>
+        </div>
+      </div>
+      <div class="menus top">
+        <div>
+          <div onclick.="restart()" class="Restart icon-wraper">
+            <div class="icon"></div>
+          </div>
+          <div onclick.="undo()" class="Undo icon-wraper">
+            <div class="icon"></div>
+          </div>
+          <div class="info" onclick.="toggleShowLevels()">
+            <span inner-text$.="currentLevel"></span>关
+            <span inner-text$.="steps"></span>步
+          </div>
+          <div onclick.="redo()" class="Redo icon-wraper">
+            <div class="icon"></div>
+          </div>
+          <div onclick.="close()" class="Close icon-wraper">
+            <div class="icon"></div>
+          </div>
+        </div>
+      </div>
+      <div if.="showingLevels" class="levels-wraper" onclick.="toggleShowLevels()">
+        <div class="levels" onclick="event.stopPropagation()">
+          <div>
+            跳到关卡：
+            <input id="txbLevel" type="number" value$.="currentLevel" max$.="levels.length" min="1" />
+            <input type="button" value="确定" onclick.="selectLevel()" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <modal-panel id="modal"></modal-panel>
+  </div>
+  <style>
+    :host {
+      display: block;
+    }
+
+    .cells {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      box-shadow: 5px 5px 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #ffffcc;
+    }
+
+    .line {
+      display: flex;
+      flex-direction: row;
+    }
+
+    .cell {
+      width: var(--cell-width);
+      height: var(--cell-width);
+      max-width: 4em;
+      max-height: 4em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .cell.Wall {
+      background: #e9ae6a;
+      box-shadow: 3px 3px 5px;
+    }
+
+    .declarator {
+      position: absolute;
+    }
+
+    .cell.TargetBox-0>.declarator,
+    .cell.TargetBox-1>.declarator,
+    .cell.TargetBox-2>.declarator,
+    .cell.TargetBox-3>.declarator,
+    .cell.TargetBox-4>.declarator {
+      width: 90%;
+      height: 90%;
+      border-radius: 10px;
+      box-shadow: 1px 1px 2px inset;
+      opacity: 0.5;
+    }
+
+    .cell.Box-0>.object,
+    .cell.Box-1>.object,
+    .cell.Box-2>.object,
+    .cell.Box-3>.object,
+    .cell.Box-4>.object,
+    .cell.Worker>.object {
+      width: 75%;
+      height: 75%;
+      border-radius: 10px;
+      box-shadow: 1px 1px 2px;
+      z-index: 1;
+    }
+
+    .cell.Worker>.object {
+      background: #cc9999;
+    }
+
+    .cell.Box-0>.object,
+    .cell.TargetBox-0>.declarator {
+      background: #99cc66;
+    }
+
+    .cell.Box-1>.object,
+    .cell.TargetBox-1>.declarator {
+      background: #ccccff;
+    }
+
+    .cell.Box-2>.object,
+    .cell.TargetBox-2>.declarator {
+      background: #99cccc;
+    }
+
+    .cell.Box-3>.object,
+    .cell.TargetBox-3>.declarator {
+      background: #e9ae6a;
+    }
+
+    .cell.Box-4>.object,
+    .cell.TargetBox-4>.declarator {
+      background: #cc9999;
+    }
+
+    .menus {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      opacity: 0.5;
+    }
+
+    .menus.top {
+      bottom: unset;
+      top: 0px;
+    }
+
+    .menus>div {
+      display: flex;
+      justify-content: center;
+    }
+
+    .menus>div>* {
+      width: 1.25em;
+      height: 1.25em;
+      font-size: 2.2rem;
+      margin: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menus>div>.icon-wraper {
+      background: #0008;
+      border-radius: 10px;
+      box-shadow: 1px 1px 2px #0008;
+    }
+
+    .icon {
+      width: 1em;
+      height: 1em;
+      background: #fff;
+      mask-size: cover;
+      -webkit-mask-size: cover;
+    }
+
+    .Left>.icon {
+      mask: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogIDxwYXRoIGQ9Ik02ODkgMTY1LjFMMzA4LjIgNDkzLjVjLTEwLjkgOS40LTEwLjkgMjcuNSAwIDM3TDY4OSA4NTguOWMxNC4yIDEyLjIgMzUgMS4yIDM1LTE4LjVWMTgzLjZjMC0xOS43LTIwLjgtMzAuNy0zNS0xOC41eiIvPgo8L3N2Zz4K");
+    }
+
+    .Up>.icon {
+      mask: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogIDxwYXRoIGQ9Ik04NTguOSA2ODlMNTMwLjUgMzA4LjJjLTkuNC0xMC45LTI3LjUtMTAuOS0zNyAwTDE2NS4xIDY4OWMtMTIuMiAxNC4yLTEuMiAzNSAxOC41IDM1aDY1Ni44YzE5LjcgMCAzMC43LTIwLjggMTguNS0zNXoiLz4KPC9zdmc+Cg==");
+    }
+
+    .Right>.icon {
+      mask: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogIDxwYXRoIGQ9Ik03MTUuOCA0OTMuNUwzMzUgMTY1LjFjLTE0LjItMTIuMi0zNS0xLjItMzUgMTguNXY2NTYuOGMwIDE5LjcgMjAuOCAzMC43IDM1IDE4LjVsMzgwLjgtMzI4LjRjMTAuOS05LjQgMTAuOS0yNy42IDAtMzd6Ii8+Cjwvc3ZnPgo=");
+    }
+
+    .Down>.icon {
+      mask: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogIDxwYXRoIGQ9Ik04NDAuNCAzMDBIMTgzLjZjLTE5LjcgMC0zMC43IDIwLjgtMTguNSAzNWwzMjguNCAzODAuOGM5LjQgMTAuOSAyNy41IDEwLjkgMzcgMEw4NTguOSAzMzVjMTIuMi0xNC4yIDEuMi0zNS0xOC41LTM1eiIvPgo8L3N2Zz4K");
+    }
+
+    .Restart>.icon {
+      mask: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgY2xhc3M9Imljb24iIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogIDxwYXRoIGQ9Ik0xNjggNTA0LjJjMS00My43IDEwLTg2LjEgMjYuOS0xMjYgMTcuMy00MSA0Mi4xLTc3LjcgNzMuNy0xMDkuNFMzMzcgMjEyLjMgMzc4IDE5NWM0Mi40LTE3LjkgODcuNC0yNyAxMzMuOS0yN3M5MS41IDkuMSAxMzMuOCAyN0EzNDEuNSAzNDEuNSAwIDAgMSA3NTUgMjY4LjhjOS45IDkuOSAxOS4yIDIwLjQgMjcuOCAzMS40bC02MC4yIDQ3YTggOCAwIDAgMCAzIDE0LjFsMTc1LjcgNDNjNSAxLjIgOS45LTIuNiA5LjktNy43bC44LTE4MC45YzAtNi43LTcuNy0xMC41LTEyLjktNi4zbC01Ni40IDQ0LjFDNzY1LjggMTU1LjEgNjQ2LjIgOTIgNTExLjggOTIgMjgyLjcgOTIgOTYuMyAyNzUuNiA5MiA1MDMuOGE4IDggMCAwIDAgOCA4LjJoNjBjNC40IDAgNy45LTMuNSA4LTcuOHptNzU2IDcuOGgtNjBjLTQuNCAwLTcuOSAzLjUtOCA3LjgtMSA0My43LTEwIDg2LjEtMjYuOSAxMjYtMTcuMyA0MS00Mi4xIDc3LjgtNzMuNyAxMDkuNEEzNDIuNDUgMzQyLjQ1IDAgMCAxIDUxMi4xIDg1NmEzNDIuMjQgMzQyLjI0IDAgMCAxLTI0My4yLTEwMC44Yy05LjktOS45LTE5LjItMjAuNC0yNy44LTMxLjRsNjAuMi00N2E4IDggMCAwIDAtMy0xNC4xbC0xNzUuNy00M2MtNS0xLjItOS45IDIuNi05LjkgNy43bC0uNyAxODFjMCA2LjcgNy43IDEwLjUgMTIuOSA2LjNsNTYuNC00NC4xQzI1OC4yIDg2OC45IDM3Ny44IDkzMiA1MTIuMiA5MzJjMjI5LjIgMCA0MTUuNS0xODMuNyA0MTkuOC00MTEuOGE4IDggMCAwIDAtOC04LjJ6Ii8+Cjwvc3ZnPgo=");
+    }
+
+    .Close>.icon {
+      mask: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgY2xhc3M9Imljb24iIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogIDxwYXRoIGQ9Ik03MDUuNiAxMjQuOWE4IDggMCAwIDAtMTEuNiA3LjJ2NjQuMmMwIDUuNSAyLjkgMTAuNiA3LjUgMTMuNmEzNTIuMiAzNTIuMiAwIDAgMSA2Mi4yIDQ5LjhjMzIuNyAzMi44IDU4LjQgNzAuOSA3Ni4zIDExMy4zYTM1NSAzNTUgMCAwIDEgMjcuOSAxMzguN2MwIDQ4LjEtOS40IDk0LjgtMjcuOSAxMzguN2EzNTUuOTIgMzU1LjkyIDAgMCAxLTc2LjMgMTEzLjMgMzUzLjA2IDM1My4wNiAwIDAgMS0xMTMuMiA3Ni40Yy00My44IDE4LjYtOTAuNSAyOC0xMzguNSAyOHMtOTQuNy05LjQtMTM4LjUtMjhhMzUzLjA2IDM1My4wNiAwIDAgMS0xMTMuMi03Ni40QTM1NS45MiAzNTUuOTIgMCAwIDEgMTg0IDY1MC40YTM1NSAzNTUgMCAwIDEtMjcuOS0xMzguN2MwLTQ4LjEgOS40LTk0LjggMjcuOS0xMzguNyAxNy45LTQyLjQgNDMuNi04MC41IDc2LjMtMTEzLjMgMTktMTkgMzkuOC0zNS42IDYyLjItNDkuOCA0LjctMi45IDcuNS04LjEgNy41LTEzLjZWMTMyYzAtNi02LjMtOS44LTExLjYtNy4yQzE3OC41IDE5NS4yIDgyIDMzOS4zIDgwIDUwNi4zIDc3LjIgNzQ1LjEgMjcyLjUgOTQzLjUgNTExLjIgOTQ0YzIzOSAuNSA0MzIuOC0xOTMuMyA0MzIuOC00MzIuNCAwLTE2OS4yLTk3LTMxNS43LTIzOC40LTM4Ni43ek00ODAgNTYwaDY0YzQuNCAwIDgtMy42IDgtOFY4OGMwLTQuNC0zLjYtOC04LThoLTY0Yy00LjQgMC04IDMuNi04IDh2NDY0YzAgNC40IDMuNiA4IDggOHoiLz4KPC9zdmc+Cg==");
+    }
+
+    .Undo>.icon {
+      mask: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgY2xhc3M9Imljb24iIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogIDxwYXRoIGQ9Ik01MTEuNCAxMjRDMjkwLjUgMTI0LjMgMTEyIDMwMyAxMTIgNTIzLjljMCAxMjggNjAuMiAyNDIgMTUzLjggMzE1LjJsLTM3LjUgNDhjLTQuMSA1LjMtLjMgMTMgNi4zIDEyLjlsMTY3LS44YzUuMiAwIDktNC45IDcuNy05LjlMMzY5LjggNzI3YTggOCAwIDAgMC0xNC4xLTNMMzE1IDc3Ni4xYy0xMC4yLTgtMjAtMTYuNy0yOS4zLTI2YTMxOC42NCAzMTguNjQgMCAwIDEtNjguNi0xMDEuN0MyMDAuNCA2MDkgMTkyIDU2Ny4xIDE5MiA1MjMuOXM4LjQtODUuMSAyNS4xLTEyNC41YzE2LjEtMzguMSAzOS4yLTcyLjMgNjguNi0xMDEuNyAyOS40LTI5LjQgNjMuNi01Mi41IDEwMS43LTY4LjZDNDI2LjkgMjEyLjQgNDY4LjggMjA0IDUxMiAyMDRzODUuMSA4LjQgMTI0LjUgMjUuMWMzOC4xIDE2LjEgNzIuMyAzOS4yIDEwMS43IDY4LjYgMjkuNCAyOS40IDUyLjUgNjMuNiA2OC42IDEwMS43IDE2LjcgMzkuNCAyNS4xIDgxLjMgMjUuMSAxMjQuNXMtOC40IDg1LjEtMjUuMSAxMjQuNWEzMTguNjQgMzE4LjY0IDAgMCAxLTY4LjYgMTAxLjdjLTcuNSA3LjUtMTUuMyAxNC41LTIzLjQgMjEuMmE3LjkzIDcuOTMgMCAwIDAtMS4yIDExLjFsMzkuNCA1MC41YzIuOCAzLjUgNy45IDQuMSAxMS40IDEuM0M4NTQuNSA3NjAuOCA5MTIgNjQ5LjEgOTEyIDUyMy45YzAtMjIxLjEtMTc5LjQtNDAwLjItNDAwLjYtMzk5Ljl6Ii8+Cjwvc3ZnPgo=");
+    }
+
+    .Redo>.icon {
+      mask: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgY2xhc3M9Imljb24iIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogIDxwYXRoIGQ9Ik03NTguMiA4MzkuMUM4NTEuOCA3NjUuOSA5MTIgNjUxLjkgOTEyIDUyMy45IDkxMiAzMDMgNzMzLjUgMTI0LjMgNTEyLjYgMTI0IDI5MS40IDEyMy43IDExMiAzMDIuOCAxMTIgNTIzLjljMCAxMjUuMiA1Ny41IDIzNi45IDE0Ny42IDMxMC4yIDMuNSAyLjggOC42IDIuMiAxMS40LTEuM2wzOS40LTUwLjVjMi43LTMuNCAyLjEtOC4zLTEuMi0xMS4xLTguMS02LjYtMTUuOS0xMy43LTIzLjQtMjEuMmEzMTguNjQgMzE4LjY0IDAgMCAxLTY4LjYtMTAxLjdDMjAwLjQgNjA5IDE5MiA1NjcuMSAxOTIgNTIzLjlzOC40LTg1LjEgMjUuMS0xMjQuNWMxNi4xLTM4LjEgMzkuMi03Mi4zIDY4LjYtMTAxLjcgMjkuNC0yOS40IDYzLjYtNTIuNSAxMDEuNy02OC42QzQyNi45IDIxMi40IDQ2OC44IDIwNCA1MTIgMjA0czg1LjEgOC40IDEyNC41IDI1LjFjMzguMSAxNi4xIDcyLjMgMzkuMiAxMDEuNyA2OC42IDI5LjQgMjkuNCA1Mi41IDYzLjYgNjguNiAxMDEuNyAxNi43IDM5LjQgMjUuMSA4MS4zIDI1LjEgMTI0LjVzLTguNCA4NS4xLTI1LjEgMTI0LjVhMzE4LjY0IDMxOC42NCAwIDAgMS02OC42IDEwMS43Yy05LjMgOS4zLTE5LjEgMTgtMjkuMyAyNkw2NjguMiA3MjRhOCA4IDAgMCAwLTE0LjEgM2wtMzkuNiAxNjIuMmMtMS4yIDUgMi42IDkuOSA3LjcgOS45bDE2NyAuOGM2LjcgMCAxMC41LTcuNyA2LjMtMTIuOWwtMzcuMy00Ny45eiIvPgo8L3N2Zz4K");
+    }
+
+    .menus>div>.info {
+      font-size: 1rem;
+      width: 5.5em;
+      height: 2.75em;
+      font-weight: bold;
+    }
+
+    .info>span {
+      padding: 5px;
+    }
+
+    .levels-wraper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff8;
+      backdrop-filter: blur(1px);
+      -webkit-backdrop-filter: blur(1px);
+    }
+
+    .levels {
+      background: #fff8;
+      box-shadow: 3px 3px 5px;
+      border-radius: 10px;
+      overflow-y: scroll;
+      padding: 10px 20px;
+      font-size: large;
+    }
+
+    .levels input {
+      font-size: large;
+    }
+  </style>
+</template>
+<style>
+  body {
+    background-image: radial-gradient(#ffcccc,
+        rgba(255, 255, 255, 0.2) 40px,
+        transparent 80px),
+      radial-gradient(#ccccff,
+        rgba(255, 255, 255, 0.3) 30px,
+        transparent 100px),
+      radial-gradient(#99cccc,
+        rgba(255, 255, 255, 0.2) 30px,
+        transparent 100px);
+    background-size: 300px 300px, 200px 200px, 300px 300px;
+    background-position: 0 0, 20px 40px, 70px 30px, 60px 80px;
+  }
+</style>
+<script>
+  window.appData = window.appData || /**@imports json */ './app-data.json'
+</script>

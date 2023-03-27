@@ -1,0 +1,7 @@
+.vscode
+node_modules
+docker-compose.override.yaml
+.local.*
+*.swp
+dist
+package-lock.json

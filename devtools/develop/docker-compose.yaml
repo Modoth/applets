@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  main:
+    image: "modoth/udev:latest"
+    stdin_open: true
+    tty: true
+    environment:
+      - "LANG=C.UTF-8"
+      - "TZ=Asia/Shanghai"
+    volumes:
+      - "./bin/main:/home/dev/.commons/main"
+      - "../..:/home/dev/${project_name}"
+    restart: always
+    container_name: ${project_name}.dev
+    hostname: ${project_name}.dev
+

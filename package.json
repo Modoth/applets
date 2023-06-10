@@ -19,6 +19,6 @@
   },
   "homepage": "https://github.com/Modoth/applets#readme",
   "devDependencies": {
-    "@modoth/spack": "^0.0.3"
+    "@modoth/spack": "^0.0.6"
   }
 }

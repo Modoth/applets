@@ -1,0 +1,21 @@
+<script src="./app.js"></script>
+<template id="app-main" view-model="App">
+  <div>
+    <div if.="originalImg">
+      <img class="original-img" src$.="originalImg" />
+    </div>
+    <modal-panel id="modal"></modal-panel>
+    <style>
+      :host {
+        display: block;
+      }
+
+      .original-img {
+        width: 100%;
+      }
+    </style>
+  </div>
+</template>
+<script>
+  window.appData = window.appData || /**@imports json */ './app-data.json'
+</script>
